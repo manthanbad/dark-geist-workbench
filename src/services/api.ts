@@ -1,7 +1,7 @@
 import { getAccessToken } from "./session";
 
 /** Base URL from env — never hardcode hosts elsewhere. */
-export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") ?? "http://localhost:4000";
+export const API_BASE_URL = (import.meta.env["VITE_API_BASE_URL"] as string | undefined)?.replace(/\/$/, "") ?? "http://localhost:4000";
 
 export class ApiError extends Error {
   status: number;
@@ -43,9 +43,9 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
     const token = getAccessToken();
     if (!token) {
       onUnauthorized?.();
-      throw new ApiError(401, FALLBACK_MESSAGES[401]);
+      throw new ApiError(401, FALLBACK_MESSAGES[401] ?? "Unauthorized");
     }
-    headers.Authorization = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   let res: Response;
@@ -53,8 +53,8 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
     res = await fetch(`${API_BASE_URL}${path}`, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-      signal,
+      body: body !== undefined ? JSON.stringify(body) : null,
+      signal: signal ?? null,
     });
   } catch {
     throw new ApiError(0, `Can't reach the API at ${API_BASE_URL}. Is the server running?`);
@@ -74,7 +74,7 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
     if (res.status === 401 && auth) onUnauthorized?.();
     const msg =
       (data && typeof data === "object" && ("message" in data || "error" in data)
-        ? String((data as Record<string, unknown>).message ?? (data as Record<string, unknown>).error)
+        ? String((data as Record<string, unknown>)["message"] ?? (data as Record<string, unknown>)["error"])
         : null) ??
       FALLBACK_MESSAGES[res.status] ??
       `Request failed (${res.status})`;
@@ -97,7 +97,7 @@ export function unwrapItem<T>(data: unknown, key: string): T {
   if (data && typeof data === "object") {
     const obj = data as Record<string, unknown>;
     if (obj[key] && typeof obj[key] === "object") return obj[key] as T;
-    if (obj.data && typeof obj.data === "object" && !Array.isArray(obj.data)) return obj.data as T;
+    if (obj["data"] && typeof obj["data"] === "object" && !Array.isArray(obj["data"])) return obj["data"] as T;
   }
   return data as T;
 }
