@@ -6,7 +6,7 @@
  */
 import type { ChatMessage, SourceReference } from "@/types";
 
-export const RAG_API_BASE_URL = (import.meta.env.VITE_RAG_API_BASE_URL as string | undefined)?.replace(/\/$/, "") ?? null;
+export const RAG_API_BASE_URL = (import.meta.env["VITE_RAG_API_BASE_URL"] as string | undefined)?.replace(/\/$/, "") ?? null;
 
 export const isAssistantAvailable = () => RAG_API_BASE_URL !== null;
 
